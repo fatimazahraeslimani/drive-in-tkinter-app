@@ -1,0 +1,170 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+class Commande:
+    def __init__(self, n_cmd, details, prix_total):
+        self.n_cmd = n_cmd
+        self.details = details
+        self.prix_total = prix_total
+        self.next = None
+class FileAttenteDriveIn:
+    def __init__(self):
+        self.head = None
+    def ajouter_nouvelle_cmd(self, n_cmd, details, prix_total):
+        nouvelle_commande = Commande(n_cmd, details, prix_total)
+        if self.head is None:
+            self.head = nouvelle_commande
+            return
+        last_commande = self.head
+        while last_commande.next:
+            last_commande = last_commande.next
+        last_commande.next = nouvelle_commande
+    def apercu(self):
+        temp = self.head
+        if temp is None:
+            print(" Il ya aucune commande à traiter !! ")
+        while temp:
+            print(f"La commande N° {temp.n_cmd} : {temp.details} | Prix {temp.prix_total} DH")
+            temp = temp.next
+    def traitement(self):
+        if self.head is None:
+            print("La liste des commandes est vide.")
+            return
+        print(f"La commande N° {self.head.n_cmd} a été traité avec succès !!! ")
+        self.head = self.head.next
+    def annuler_cmd(self, n_cmd):
+        if self.head is None:
+            print("La liste des commandes est vide.")
+            return
+        if self.head.n_cmd == n_cmd:
+            self.head = self.head.next
+            print(f"La commande avec le N° '{n_cmd}' a été annulée.")
+            return
+        current = self.head
+        while current.next is not None:
+            if current.next.n_cmd == n_cmd:
+                current.next = current.next.next
+                print(f"La commande avec le N° '{n_cmd}' a été annulée.")
+                return
+            current = current.next
+        print(f"La commande N° '{n_cmd}' n'apparaît pas dans la liste.")
+class Application(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.file = FileAttenteDriveIn()
+        self.title("Drive-In — Gestion de la File d'Attente")
+        self.minsize(900, 550)
+        self.resizable(True, True)
+        self.state("zoomed")
+        self._construire_interface()
+    def _construire_interface(self):
+        self.columnconfigure(0, weight=0)
+        self.columnconfigure(1, weight=1)
+        self.rowconfigure(1, weight=1)
+        tk.Label(self,text="  Drive-In — Tableau de Bord",font=("Arial", 16, "bold"),bg="#e67e22",
+                  fg="white",padx=10, pady=12).grid(row=0, column=0, columnspan=2, sticky="ew")
+        gauche = tk.Frame(self, bg="#f0f0f0", padx=16, pady=16, width=340)
+        gauche.grid(row=1, column=0, sticky="ns")
+        gauche.grid_propagate(False)
+        gauche.columnconfigure(0, weight=1)
+        tk.Label(gauche, text="── Nouvelle Commande ──",font=("Arial", 11, "bold"), bg="#f0f0f0").grid(row=0, column=0, pady=(0, 8))
+        tk.Label(gauche, text="Numéro de commande :",font=("Arial", 10), bg="#f0f0f0", anchor="w").grid(row=1, column=0, sticky="ew")
+        self.ent_num = tk.Entry(gauche, font=("Arial", 10))
+        self.ent_num.grid(row=2, column=0, sticky="ew", pady=(2, 8))
+        tk.Label(gauche, text="Détails :",font=("Arial", 10), bg="#f0f0f0", anchor="w").grid(row=3, column=0, sticky="ew")
+        self.ent_details = tk.Entry(gauche, font=("Arial", 10))
+        self.ent_details.grid(row=4, column=0, sticky="ew", pady=(2, 8))
+        tk.Label(gauche, text="Prix (DH) :",font=("Arial", 10), bg="#f0f0f0", anchor="w").grid(row=5, column=0, sticky="ew")
+        self.ent_prix = tk.Entry(gauche, font=("Arial", 10))
+        self.ent_prix.grid(row=6, column=0, sticky="ew", pady=(2, 8))
+        tk.Button(gauche, text="➕  Ajouter à la file",bg="#27ae60", fg="white",font=("Arial", 11, "bold"),relief="flat", 
+                  pady=8,command=self._ajouter).grid(row=7, column=0, sticky="ew", pady=(4, 16))
+        ttk.Separator(gauche).grid(row=8, column=0, sticky="ew", pady=4)
+        tk.Label(gauche, text="── Traitement ──",font=("Arial", 11, "bold"), bg="#f0f0f0").grid(row=9, column=0, pady=(12, 8))
+        tk.Button(gauche, text="⚡  Servir la prochaine commande",bg="#2980b9", fg="white",font=("Arial", 11, "bold"),relief="flat", 
+                  pady=8,command=self._servir).grid(row=10, column=0, sticky="ew", pady=(0, 16))
+        ttk.Separator(gauche).grid(row=11, column=0, sticky="ew", pady=4)
+        tk.Label(gauche, text="── Annulation ──",font=("Arial", 11, "bold"), bg="#f0f0f0").grid(row=12, column=0, pady=(12, 8))
+        tk.Label(gauche, text="N° de commande à annuler :",font=("Arial", 10), bg="#f0f0f0", anchor="w").grid(row=13, column=0, sticky="ew")
+        self.ent_annul = tk.Entry(gauche, font=("Arial", 10))
+        self.ent_annul.grid(row=14, column=0, sticky="ew", pady=(2, 8))
+        tk.Button(gauche, text="✖  Annuler cette commande",bg="#c0392b", fg="white",font=("Arial", 11, "bold"),relief="flat",
+                   pady=8,command=self._annuler).grid(row=15, column=0, sticky="ew", pady=(4, 0))
+        droite = tk.LabelFrame(self,text="  File d'attente (Temps Réel)  ",font=("Arial", 12, "bold"),padx=12, pady=12)
+        droite.grid(row=1, column=1, sticky="nsew", padx=12, pady=10)
+        droite.columnconfigure(0, weight=1)
+        droite.rowconfigure(2, weight=1)
+        self.lbl_compteur = tk.Label(droite,text="Commandes en attente : 0",font=("Arial", 13, "bold"),fg="#e67e22")
+        self.lbl_compteur.grid(row=0, column=0, sticky="w", pady=(0, 8))
+        entete = tk.Frame(droite, bg="#2c3e50")
+        entete.grid(row=1, column=0, sticky="ew")
+        for (txt, w) in [("N° CMD", 10), ("Détails", 35), ("Prix (DH)", 12)]:
+            tk.Label(entete, text=txt, bg="#2c3e50", fg="white",font=("Courier", 10, "bold"),width=w, anchor="w").pack(side="left", padx=6, pady=4)
+        frame_liste = tk.Frame(droite)
+        frame_liste.grid(row=2, column=0, sticky="nsew")
+        frame_liste.columnconfigure(0, weight=1)
+        frame_liste.rowconfigure(0, weight=1)
+        scrollbar = tk.Scrollbar(frame_liste)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.listbox = tk.Listbox(frame_liste,font=("Courier", 11),yscrollcommand=scrollbar.set,selectbackground="#e67e22",activestyle="none")
+        self.listbox.grid(row=0, column=0, sticky="nsew")
+        scrollbar.config(command=self.listbox.yview)
+    def _ajouter(self):
+        num     = self.ent_num.get().strip()
+        details = self.ent_details.get().strip()
+        prix    = self.ent_prix.get().strip()
+        if not num or not details or not prix:
+            messagebox.showerror("Champs vides","Veuillez remplir tous les champs avant d'ajouter.")
+            return
+        if not num.isdigit():
+            messagebox.showerror("Numéro invalide","Le numéro de commande doit être un nombre entier.\nEx : 101")
+            return
+        try:
+            prix_f = float(prix)
+            if prix_f <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Prix invalide","Le prix doit être un nombre positif.\nEx : 45.50")
+            return
+        self.file.ajouter_nouvelle_cmd(num, details, prix_f)
+        self.ent_num.delete(0, tk.END)
+        self.ent_details.delete(0, tk.END)
+        self.ent_prix.delete(0, tk.END)
+        self._rafraichir_affichage()
+    def _servir(self):
+        if self.file.head is None:
+            messagebox.showerror("File vide","La file d'attente est vide. Aucune commande à servir.")
+            return
+        cmd = self.file.head          
+        self.file.traitement()       
+        messagebox.showinfo("Commande servie",f"La commande N° {cmd.n_cmd} a été traitée avec succès !\n"f"Détails : {cmd.details}\n"f"Prix : {cmd.prix_total:.2f} DH")
+        self._rafraichir_affichage()
+    def _annuler(self):
+        num = self.ent_annul.get().strip()
+        if not num:
+            messagebox.showerror("Champ vide","Veuillez saisir un numéro de commande à annuler.")
+            return
+        temp = self.file.head
+        while temp:
+            if temp.n_cmd == num:
+                break
+            temp = temp.next
+        if temp is None:
+            messagebox.showerror("Introuvable",f"La commande N° {num} n'existe pas dans la file d'attente.")
+            return
+        self.file.annuler_cmd(num)
+        self.ent_annul.delete(0, tk.END)
+        messagebox.showinfo("Annulée",f"La commande N° {num} a été annulée avec succès.")
+        self._rafraichir_affichage()
+    def _rafraichir_affichage(self):
+        self.listbox.delete(0, tk.END)
+        count = 0
+        temp = self.file.head
+        while temp:
+            count += 1
+            ligne = f"  {str(temp.n_cmd):<12} {temp.details:<35} {temp.prix_total:.2f} DH"
+            self.listbox.insert(tk.END, ligne)
+            temp = temp.next
+        self.lbl_compteur.config(text=f"Commandes en attente : {count}")
+if __name__ == "__main__":
+    app = Application()
+    app.mainloop()
